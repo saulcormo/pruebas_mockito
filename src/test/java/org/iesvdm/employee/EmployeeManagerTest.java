@@ -2,18 +2,18 @@ package org.iesvdm.employee;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
+import org.mockito.*;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class EmployeeManagerTest {
 
@@ -25,7 +25,7 @@ public class EmployeeManagerTest {
 
 	/**
 	 * Explica en este comentario que efecto tiene
-	 * esta anotacion @InjectMocks
+	 * esta anotacion @InjectMocks injectarlo en employeeManager por su constructor
 	 */
 	@InjectMocks
 	private EmployeeManager employeeManager;
@@ -57,6 +57,8 @@ public class EmployeeManagerTest {
 	@Test
 	public void testPayEmployeesReturnZeroWhenNoEmployeesArePresent() {
 
+		when(employeeRepository.findAll()).thenReturn(Arrays.asList());
+		assertThat(employeeManager.payEmployees()).isEqualTo(0);
 	}
 
 	/**
@@ -71,6 +73,13 @@ public class EmployeeManagerTest {
 	 */
 	@Test
 	public void testPayEmployeesReturnOneWhenOneEmployeeIsPresentAndBankServicePayPaysThatEmployee() {
+
+		when(employeeRepository.findAll()).thenReturn(Arrays.asList(new Employee("1",1000)));
+
+		assertThat(employeeManager.payEmployees()).isEqualTo(1);
+		verify(bankService, times(1)).pay("1",1000	);
+		verifyNoMoreInteractions(bankService);
+
 
 	}
 
@@ -88,6 +97,16 @@ public class EmployeeManagerTest {
 	 */
 	@Test
 	public void testPayEmployeesWhenSeveralEmployeeArePresent() {
+		Employee employee1 = new Employee("1", 1000);
+		Employee employee2 = new Employee("2", 2000);
+
+		List<Employee> list = asList( employee1,employee2);
+
+		when(employeeRepository.findAll()).thenReturn(list);
+		assertThat(employeeManager.payEmployees()).isEqualTo(2);
+
+
+
 
 	}
 
@@ -104,6 +123,16 @@ public class EmployeeManagerTest {
 	@Test
 	public void testPayEmployeesInOrderWhenSeveralEmployeeArePresent() {
 
+		Employee employee1 = new Employee("1", 1000);
+		Employee employee2 = new Employee("2", 2000);
+		List<Employee> list = asList(employee1,employee2);
+
+		when(employeeRepository.findAll()).thenReturn(list);
+		assertThat(employeeManager.payEmployees()).isEqualTo(2);
+
+		InOrder inOrder = inOrder(bankService);
+
+
 	}
 
 	/**
@@ -116,6 +145,27 @@ public class EmployeeManagerTest {
 	 */
 	@Test
 	public void testExampleOfInOrderWithTwoMocks() {
+
+		Employee employee1 = new Employee("1", 1000);
+		Employee employee2 = new Employee("2", 2000);
+		List<Employee> list = asList(employee1,employee2);
+
+		when(employeeRepository.findAll()).thenReturn(list);
+		assertThat(employeeManager.payEmployees()).isEqualTo(2);
+
+		InOrder inOrder = inOrder(bankService);
+		inOrder.verify(employeeRepository).findAll();
+		inOrder.verify(bankService).pay("1",1000);
+		inOrder.verify(bankService).pay("2",2000);
+
+		verify(bankService).pay("1",1000);
+		verify(bankService).pay("2",2000);
+		verify(employeeRepository).findAll();
+
+		inOrder.verifyNoMoreInteractions();
+
+
+
 
 	}
 
@@ -135,7 +185,29 @@ public class EmployeeManagerTest {
 	 */
 	@Test
 	public void testExampleOfArgumentCaptor() {
+		Employee employee1 = new Employee("1", 1250.0d);
+		Employee employee2 = new Employee("2", 1050.0d);
+		List<Employee> list = Arrays.asList(employee1, employee2);
 
+		when(employeeRepository.findAll()).thenReturn(asList(employee1, employee2));
+		assertThat(employeeManager.payEmployees()).isEqualTo(2);
+
+		ArgumentCaptor<String> idCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<Double> amountCaptor = ArgumentCaptor.forClass(Double.class);
+		verify(bankService, times(2)).pay(idCaptor.capture(), amountCaptor.capture());
+
+	// cogemos todos los valores
+		List<String> listIdCaptor = idCaptor.getAllValues();
+		var listAmountCaptor = amountCaptor.getAllValues();
+
+	// ponemos uno a uno los empleados usando los idCaptor y AmountCaptor
+		assertThat(listIdCaptor.get(0)).isEqualTo("1");
+		assertThat(listAmountCaptor.get(0)).isEqualTo(1250.0d);
+
+		assertThat(listIdCaptor.get(1)).isEqualTo("2");
+		assertThat(listAmountCaptor.get(1)).isEqualTo(1050.0d);
+
+		verifyNoMoreInteractions(bankService);
 	}
 
 	/**
@@ -149,8 +221,16 @@ public class EmployeeManagerTest {
 	 */
 	@Test
 	public void testEmployeeSetPaidIsCalledAfterPaying() {
+		BankService bankService = mock(BankService.class);
+		Employee toBePaid = spy(new Employee("1", 1000));
+		List<Employee> employees = Collections.singletonList(toBePaid);
+
+
+
+
 
 	}
+
 
 
 	/**
@@ -167,8 +247,39 @@ public class EmployeeManagerTest {
 	 */
 	@Test
 	public void testPayEmployeesWhenBankServiceThrowsException() {
+		// Mock the employeeRepository
+		EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
 
+		// Create a spy for notToBePaid employee with ID 1 and salary 1000
+		Employee notToBePaid = spy(new Employee("1", 1000));
+
+		// Create a list of employees containing only notToBePaid
+		List<Employee> employees = Collections.singletonList(notToBePaid);
+
+		// Stub the employeeRepository to return the list of employees
+		when(employeeRepository.findAll()).thenReturn(employees);
+
+		// Stub the bankService to throw a RuntimeException when pay method is called with any argument
+		doThrow(new RuntimeException()).when(bankService).pay(any());
+
+		// Inject the mocked employeeRepository into the employeeManager
+		employeeManager.setEmployeeRepository(employeeRepository);
+
+		// Invoke the method to pay employees
+		employeeManager.payEmployees();
+
+		// Verify that the pay method was called with notToBePaid employee
+		verify(bankService).pay(notToBePaid);
+
+		// Verify that setPaid(false) was called on notToBePaid employee
+		verify(notToBePaid).setPaid(false);
+
+		// Assert that the number of paid employees is 0
+		assertThat(employeeManager.payEmployees()).isEqualTo(0);
 	}
+
+
+
 
 	/**
 	 * Descripcion del test:
@@ -204,6 +315,21 @@ public class EmployeeManagerTest {
 	 */
 	@Test
 	public void testArgumentMatcherExample() {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	}
 

@@ -14,7 +14,7 @@ public class EmployeeManager {
 	private EmployeeRepository employeeRepository;
 	private BankService bankService;
 
-	public EmployeeManager(EmployeeRepository employeeRepository, BankService bankService) {
+	public EmployeeManager(BankService bankService) {
 		this.employeeRepository = employeeRepository;
 		this.bankService = bankService;
 	}
@@ -35,4 +35,7 @@ public class EmployeeManager {
 		return payments;
 	}
 
+	public void setEmployeeRepository(EmployeeRepository employeeRepository) {
+
+	}
 }

@@ -127,7 +127,7 @@ public class MockVsSpyTest
         assertThat(role_access_msg).isNotEmpty();
 
         //doReturnWhen no implementa seguridad de tipo devuelto
-        Mockito.doReturn("admin").when(user).getRole();
+        //Mockito.doReturn("admin").when(user).getRole();
 
         assertThat(user.getRole()).isEqualTo("admin");
         //              |
